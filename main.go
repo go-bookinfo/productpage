@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"io/ioutil"
 	"net/http"
@@ -45,7 +46,10 @@ func main() {
 		// w.Write(detail)
 		// w.Write(review)
 	})
-	http.ListenAndServe(":80", nil)
+	err := http.ListenAndServe(":80", nil)
+	if err != nil {
+		fmt.Println(err)
+	}
 }
 
 func getJson(url string) []byte {
