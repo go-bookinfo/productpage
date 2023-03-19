@@ -1,0 +1,28 @@
+<body>
+    {{with .detail}}
+        <h1>{{.Name}}</h1>
+        {{.Summary}}
+
+        <h2>Book Details</h2>
+        <h3>Type</h3>
+        {{.Type}}
+        <h3>Page</h3>
+        {{.Page}}
+        <h3>Publisher</h3>
+        {{.Publisher}}
+        <h3>Language</h3>
+        {{.Language}}
+        <h3>Isbn10</h3>
+        {{.Isbn10}}
+        <h3>Isbn13</h3>
+        {{.Isbn13}}
+    {{end}}
+    {{with .review}}
+        <h2>Book Reviews</h2>
+        {{range .}}
+            <p>{{.Review}}</p>
+            <p>{{.Reviewer}}</p>
+            <p>star : {{.Star}}</p>
+        {{end}}
+    {{ end }}
+</body>
