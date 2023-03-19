@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"io/ioutil"
 	"net/http"
@@ -31,12 +32,12 @@ type review struct {
 func main() {
 
 	http.HandleFunc("/productpage", func(w http.ResponseWriter, r *http.Request) {
-		// var detail detail
-		// var review []review
-		detail := detail{}
-		review := []review{}
+		var detail detail
+		var review []review
 		json.Unmarshal(getJson("http://detail/detail"), &detail)
 		json.Unmarshal(getJson("http://review/review"), &review)
+		fmt.Println(detail)
+		fmt.Println(review)
 
 		t, _ := template.ParseFiles("index.html")
 		t.Execute(w, Data{
