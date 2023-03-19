@@ -97,3 +97,14 @@ jobs:
         # This step uses the identity token to provision an ephemeral certificate
         # against the sigstore community Fulcio instance.
         run: echo "${{ steps.meta.outputs.tags }}" | xargs -I {} cosign sign {}@${{ steps.build-and-push.outputs.digest }}
+      
+      - name: helm tag update
+        run: |
+          git clone --depth 1 https://gustjd887:${{ secrets.GIT_TOKEN }}@github.com/go-bookinfo/helm.git
+          cd helm
+          sed -i 's/tag: .*$/tag: "'sha-${GITHUB_SHA::7}'"/g' productpage/values.yaml
+          git config user.name "GitHub Actions"
+          git config user.email "action@github.com"
+          git add .
+          git commit --allow-empty -m "tag change"
+          git push origin main
