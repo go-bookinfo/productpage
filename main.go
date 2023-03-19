@@ -33,8 +33,8 @@ func main() {
 	http.HandleFunc("/productpage", func(w http.ResponseWriter, r *http.Request) {
 		var detail detail
 		var review []review
-		json.Unmarshal(getJson("http://localhost:8002/detail"), &detail)
-		json.Unmarshal(getJson("http://localhost:8001/review"), &review)
+		json.Unmarshal(getJson("http://detail/detail"), &detail)
+		json.Unmarshal(getJson("http://review/review"), &review)
 
 		t, _ := template.ParseFiles("index.html")
 		t.Execute(w, Data{
