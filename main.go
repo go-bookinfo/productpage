@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"html/template"
 	"io/ioutil"
 	"net/http"
@@ -32,8 +31,10 @@ type review struct {
 func main() {
 
 	http.HandleFunc("/productpage", func(w http.ResponseWriter, r *http.Request) {
-		var detail detail
-		var review []review
+		// var detail detail
+		// var review []review
+		detail := detail{}
+		review := []review{}
 		json.Unmarshal(getJson("http://detail/detail"), &detail)
 		json.Unmarshal(getJson("http://review/review"), &review)
 
@@ -46,10 +47,7 @@ func main() {
 		// w.Write(detail)
 		// w.Write(review)
 	})
-	err := http.ListenAndServe(":80", nil)
-	if err != nil {
-		fmt.Println(err)
-	}
+	http.ListenAndServe(":80", nil)
 }
 
 func getJson(url string) []byte {
