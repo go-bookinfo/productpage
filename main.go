@@ -39,7 +39,7 @@ func main() {
 		fmt.Println(detail)
 		fmt.Println(review)
 
-		t, _ := template.ParseFiles("index.html")
+		t, _ := template.ParseFiles("/app/index.html")
 		t.Execute(w, Data{
 			"detail": detail,
 			"review": review,
