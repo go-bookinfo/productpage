@@ -41,10 +41,7 @@ jobs:
       - name: Install dependencies
         run: go get .
       - name: Go Build
-        run: |
-          go build -o productpage
-          pwd
-          ls -al
+        run: CGO_ENABLED=0 go build
       # Install the cosign tool except on PR
       # https://github.com/sigstore/cosign-installer
       - name: Install cosign
