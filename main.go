@@ -108,7 +108,8 @@ func main() {
 
 		// w.Write(detail)
 		// w.Write(review)
-		ctx, span := tr.Start(ctx, "productpage")
+		_, span := tr.Start(ctx, "productpage")
+		defer span.End()
 	})
 	http.ListenAndServe(":80", nil)
 }
