@@ -39,7 +39,7 @@ jobs:
         with:
           go-version: 1.20
       - name: Go Build
-        run: go get && CGO_ENABLED=0 go build
+        run: go get
       # Install the cosign tool except on PR
       # https://github.com/sigstore/cosign-installer
       - name: Install cosign
