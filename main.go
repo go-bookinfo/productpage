@@ -10,12 +10,14 @@ import (
 	"net/http"
 	"time"
 
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/jaeger"
 	"go.opentelemetry.io/otel/sdk/resource"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type Data map[string]interface{}
@@ -66,8 +68,18 @@ func tracerProvider(url string) (*tracesdk.TracerProvider, error) {
 }
 
 func main() {
-
 	// for jeager
+
+	handler := http.HandlerFunc(httpHandler)
+	wrappedHandler := otelhttp.NewHandler(handler, "productpage")
+	http.Handle("/productpage", wrappedHandler)
+	http.ListenAndServe(":80", nil)
+}
+
+func httpHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	var detail detail
+	var review []review
 	tp, err := tracerProvider("http://jaeger-collector.istio-system:14268/api/traces")
 	if err != nil {
 		log.Fatal(err)
@@ -89,32 +101,22 @@ func main() {
 			log.Fatal(err)
 		}
 	}(ctx)
-
 	tr := tp.Tracer("component-main")
+	json.Unmarshal(getJson(tr, ctx, "http://detail/detail"), &detail)
+	json.Unmarshal(getJson(tr, ctx, "http://review/review"), &review)
+	fmt.Println(detail)
+	fmt.Println(review)
 
-	http.HandleFunc("/productpage", func(w http.ResponseWriter, r *http.Request) {
-		var detail detail
-		var review []review
-		json.Unmarshal(getJson("http://detail/detail"), &detail)
-		json.Unmarshal(getJson("http://review/review"), &review)
-		fmt.Println(detail)
-		fmt.Println(review)
-
-		t, _ := template.ParseFiles("/app/index.html")
-		t.Execute(w, Data{
-			"detail": detail,
-			"review": review,
-		})
-
-		// w.Write(detail)
-		// w.Write(review)
-		_, span := tr.Start(ctx, "productpage")
-		defer span.End()
+	t, _ := template.ParseFiles("/app/index.html")
+	t.Execute(w, Data{
+		"detail": detail,
+		"review": review,
 	})
-	http.ListenAndServe(":80", nil)
 }
 
-func getJson(url string) []byte {
+func getJson(tr trace.Tracer, ctx context.Context, url string) []byte {
+	_, span := tr.Start(ctx, "getJson")
+	defer span.End()
 	resp, err := http.Get(url)
 	if err != nil {
 		panic(err)
