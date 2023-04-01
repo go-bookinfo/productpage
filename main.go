@@ -51,12 +51,12 @@ func Inject(spanContext opentracing.SpanContext, request *http.Request, requestI
 func main() {
 	http.HandleFunc("/productpage", func(w http.ResponseWriter, r *http.Request) {
 		requestID, ctx, _ := Extract(r)
-		fmt.Println(requestID, ctx)
+		_ = Inject(ctx, r.Response.Request, requestID)
 
 		var detail detail
 		var review []review
-		json.Unmarshal(getJson("http://detail/detail"), &detail)
-		json.Unmarshal(getJson("http://review/review"), &review)
+		json.Unmarshal(getJson(ctx, requestID, "http://detail/detail"), &detail)
+		json.Unmarshal(getJson(ctx, requestID, "http://review/review"), &review)
 		fmt.Println(detail)
 		fmt.Println(review)
 
@@ -69,12 +69,26 @@ func main() {
 	http.ListenAndServe(":80", nil)
 }
 
-func getJson(url string) []byte {
-	resp, err := http.Get(url)
+func getJson(ctx opentracing.SpanContext, requestID string, url string) []byte {
+	req, _ := http.NewRequest("GET", url, nil)
+	Inject(ctx, req, requestID)
+
+	// if err != nil {
+	//     panic(err)
+	// }
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		panic(err)
 	}
 	defer resp.Body.Close()
+
+	// resp, err := http.Get(url)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// defer resp.Body.Close()
 
 	json, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
