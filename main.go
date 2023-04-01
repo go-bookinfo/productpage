@@ -6,6 +6,8 @@ import (
 	"html/template"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/opentracing/opentracing-go"
 )
 
 type Data map[string]interface{}
@@ -29,8 +31,28 @@ type review struct {
 	Color    string
 }
 
+func Extract(r *http.Request) (string, opentracing.SpanContext, error) {
+	requestID := r.Header.Get("x-request-id")
+	spanCtx, err :=
+		opentracing.GlobalTracer().Extract(
+			opentracing.HTTPHeaders,
+			opentracing.HTTPHeadersCarrier(r.Header))
+	return requestID, spanCtx, err
+}
+
+func Inject(spanContext opentracing.SpanContext, request *http.Request, requestID string) error {
+	request.Header.Add("x-request-id", requestID)
+	return opentracing.GlobalTracer().Inject(
+		spanContext,
+		opentracing.HTTPHeaders,
+		opentracing.HTTPHeadersCarrier(request.Header))
+}
+
 func main() {
 	http.HandleFunc("/productpage", func(w http.ResponseWriter, r *http.Request) {
+		requestID, ctx, _ := Extract(r)
+		fmt.Println(requestID, ctx)
+
 		var detail detail
 		var review []review
 		json.Unmarshal(getJson("http://detail/detail"), &detail)
