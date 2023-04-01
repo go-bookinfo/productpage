@@ -115,7 +115,7 @@ func httpHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func getJson(tr trace.Tracer, ctx context.Context, url string) []byte {
-	ctx, span := tr.Start(ctx, "getJson")
+	_, span := tr.Start(ctx, "getJson")
 	defer span.End()
 	resp, err := http.Get(url)
 	if err != nil {
