@@ -51,7 +51,6 @@ func Inject(spanContext opentracing.SpanContext, request *http.Request, requestI
 func main() {
 	http.HandleFunc("/productpage", func(w http.ResponseWriter, r *http.Request) {
 		requestID, ctx, _ := Extract(r)
-		_ = Inject(ctx, r.Response.Request, requestID)
 
 		var detail detail
 		var review []review
