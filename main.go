@@ -4,10 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"io"
 	"io/ioutil"
 	"net/http"
 
 	"github.com/opentracing/opentracing-go"
+	jaeger "github.com/uber/jaeger-client-go"
+	"github.com/uber/jaeger-client-go/zipkin"
 )
 
 type Data map[string]interface{}
@@ -31,6 +34,19 @@ type review struct {
 	Color    string
 }
 
+func Init() (opentracing.Tracer, io.Closer) {
+	zipkinPropagator := zipkin.NewZipkinB3HTTPHeaderPropagator()
+	tracer, closer := jaeger.NewTracer(
+		"",
+		jaeger.NewConstSampler(false),
+		jaeger.NewNullReporter(),
+		jaeger.TracerOptions.Injector(opentracing.HTTPHeaders, zipkinPropagator),
+		jaeger.TracerOptions.Extractor(opentracing.HTTPHeaders, zipkinPropagator),
+	)
+	opentracing.SetGlobalTracer(tracer)
+	return tracer, closer
+}
+
 func Extract(r *http.Request) (string, opentracing.SpanContext, error) {
 	requestID := r.Header.Get("x-request-id")
 	spanCtx, err :=
@@ -49,6 +65,8 @@ func Inject(spanContext opentracing.SpanContext, request *http.Request, requestI
 }
 
 func main() {
+	_, closer := Init()
+	defer closer.Close()
 	http.HandleFunc("/productpage", func(w http.ResponseWriter, r *http.Request) {
 		requestID, ctx, _ := Extract(r)
 
