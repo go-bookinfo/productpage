@@ -80,7 +80,7 @@ func httpHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	var detail detail
 	var review []review
-	tp, err := tracerProvider("http://jaeger-collector.istio-system:14268/api/traces")
+	tp, err := tracerProvider("http://tracing.istio-system")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -115,7 +115,7 @@ func httpHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func getJson(tr trace.Tracer, ctx context.Context, url string) []byte {
-	_, span := tr.Start(ctx, "getJson")
+	ctx, span := tr.Start(ctx, "getJson")
 	defer span.End()
 	resp, err := http.Get(url)
 	if err != nil {
