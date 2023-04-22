@@ -66,9 +66,9 @@ func Inject(spanContext opentracing.SpanContext, request *http.Request, requestI
 func main() {
 	_, closer := Init()
 	defer closer.Close()
+	dc := make(chan []byte)
+	rc := make(chan []byte)
 	http.HandleFunc("/productpage", func(w http.ResponseWriter, r *http.Request) {
-		dc := make(chan []byte)
-		rc := make(chan []byte)
 		requestID, ctx, _ := Extract(r)
 
 		var detail detail
