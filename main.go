@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"html/template"
 	"io"
 	"io/ioutil"
@@ -67,15 +66,19 @@ func Inject(spanContext opentracing.SpanContext, request *http.Request, requestI
 func main() {
 	_, closer := Init()
 	defer closer.Close()
+	dc := make(chan []byte)
+	rc := make(chan []byte)
 	http.HandleFunc("/productpage", func(w http.ResponseWriter, r *http.Request) {
 		requestID, ctx, _ := Extract(r)
 
 		var detail detail
 		var review []review
-		json.Unmarshal(getJson(ctx, requestID, "http://detail/detail"), &detail)
-		json.Unmarshal(getJson(ctx, requestID, "http://review/review"), &review)
-		fmt.Println(detail)
-		fmt.Println(review)
+		go getJson(dc, ctx, requestID, "http://detail/detail")
+		go getJson(rc, ctx, requestID, "http://review/review")
+		// json.Unmarshal(getJson(ctx, requestID, "http://detail/detail"), &detail)
+		// json.Unmarshal(getJson(ctx, requestID, "http://review/review"), &review)
+		json.Unmarshal(<-dc, &detail)
+		json.Unmarshal(<-rc, &review)
 
 		t, _ := template.ParseFiles("/app/index.html")
 		t.Execute(w, Data{
@@ -86,7 +89,7 @@ func main() {
 	http.ListenAndServe(":80", nil)
 }
 
-func getJson(ctx opentracing.SpanContext, requestID string, url string) []byte {
+func getJson(c chan []byte, ctx opentracing.SpanContext, requestID string, url string) {
 	req, _ := http.NewRequest("GET", url, nil)
 	Inject(ctx, req, requestID)
 
@@ -112,5 +115,5 @@ func getJson(ctx opentracing.SpanContext, requestID string, url string) []byte {
 		panic(err)
 	}
 
-	return json
+	c <- json
 }
